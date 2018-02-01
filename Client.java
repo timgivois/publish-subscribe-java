@@ -17,7 +17,9 @@ public class Client extends UnicastRemoteObject implements IClient {
 	private void connect() {
 		try {
 			server=(IServer) Naming.lookup("rmi://"+serverURL+"/Server");
+			System.out.println("Successfully connected");
 			server.login(name, this);
+
 		}
 		catch( Exception e ) {
 			e.printStackTrace();
@@ -83,7 +85,9 @@ public class Client extends UnicastRemoteObject implements IClient {
 	public static void main( String[] args ) {
 		String strCad;
 		try {
+			System.out.println("Connecting to " + args[1]);
 			Client clte = new Client( args[0],args[1] );
+
 			strCad = pideCadena(args[0] + " -- Cadena a enviar: ");
 
 			while( !strCad.equals("quit") ) {
