@@ -34,7 +34,7 @@ public class Server extends UnicastRemoteObject implements IServer {
 	}
 
 	public static void main( String[] args ){
-		String serverURL = new String("///Server");
+		String serverURL = "/Server";
 		try {
 			Server server = new Server();
 			Naming.rebind(serverURL, server);
