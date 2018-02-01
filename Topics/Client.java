@@ -44,6 +44,10 @@ public class Client extends UnicastRemoteObject implements IClient {
 		}
 	}
 
+	public String getName() {
+		return this.name;
+	}
+
 	public void receiveEnter( String name ) {
 		System.out.println("\nLog in "+name+"\n"+this.name+" -- Cadena a enviar: ");
 	}

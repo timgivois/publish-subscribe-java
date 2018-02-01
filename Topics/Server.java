@@ -4,29 +4,32 @@ import java.util.*;
 
 public class Server extends UnicastRemoteObject implements IServer {
 
-	Hashtable<String, IClient> chatters = new Hashtable<String, IClient>();
+	Hashtable<String, IClient> clients = new Hashtable<String, IClient>();
 
 	public Server() throws RemoteException  {}
-	public synchronized void login(String name, IClient nc) throws RemoteException {
-		chatters.put(name,nc);
-		Enumeration entChater = chatters.elements();
+	public synchronized void login(String clientName, IClient clientObject) throws RemoteException {
+		clients.put(clientName, clientObject);
+		Enumeration entChater = clients.elements();
 		while( entChater.hasMoreElements() ){
-			((IClient) entChater.nextElement()).receiveEnter(name);
+			IClient nextClient = (IClient) entChater.nextElement();
+			if (!nextClient.getName().equals(clientName)) {
+				nextClient.receiveEnter(clientName);
+			}
 		}
-		System.out.println("Client " + name + " has logged in");
+		System.out.println("Client " + clientName + " has logged in");
 	}
 
 	public synchronized void logout(String name) throws RemoteException {
 		System.out.println("Client " + name + " has logged out");
-		Enumeration entChater = chatters.elements();
+		Enumeration entChater = clients.elements();
 		while( entChater.hasMoreElements()) {
 			((IClient) entChater.nextElement()).receiveExit(name);
 		}
-		chatters.remove(name);
+		clients.remove(name);
   }
 
 	public synchronized void send(Message message) throws RemoteException {
-		Enumeration entChater = chatters.elements();
+		Enumeration entChater = clients.elements();
 		while( entChater.hasMoreElements() ) {
 			((IClient) entChater.nextElement()).receiveMessage(message);
 		}
