@@ -1,68 +1,70 @@
 import java.rmi.*;
 import java.rmi.server.*;
 import java.io.*;
+import java.util.*;
 
 public class Client extends UnicastRemoteObject implements IClient {
 
-	public String name;
-	IServer server;
-	String serverURL;
+	private String name;
+	private IServer server;
+	private String serverURL;
+	public ArrayList<String> subscribedTopics;
 
 	public Client( String name, String url ) throws RemoteException {
 		this.name = name;
 		serverURL = url;
+		this.subscribedTopics = new ArrayList<String>(); // Subscribed topics of this client
 		connect();
 	}
 
-	private void connect() {
+	private void connect() { // Connect and identify client
 		try {
 			server=(IServer) Naming.lookup("rmi://"+serverURL+"/Server");
 			System.out.println("Successfully connected");
-			server.login(name, this);
-
+			server.login(this);
+			System.out.println("Successfully identified");
 		}
 		catch( Exception e ) {
 			e.printStackTrace();
 		}
 	}
 
-	private void disconnect() {
+	private void publishIn(String text, String topic) { // Publish in a topic
 		try {
-			server.logout(name);
-		}
-		catch( Exception e ) {
-			e.printStackTrace();
-		}
-	}
-
-	private void sendTextToChat(String text) {
-		try {
-			server.send(new Message(name,text));
+			server.publish(new Message(name, topic, text)); // publish a message object
 		}
 		catch( RemoteException e ) {
 			e.printStackTrace();
 		}
 	}
 
+	private void subscribeTo(String topic) { // Subscribe to a topic
+		subscribedTopics.add(topic); // Save it locally
+		try {
+			server.subscribe(this, topic); // Ask the server to subscribe
+		}
+		catch( RemoteException e ) {
+			e.printStackTrace();
+		}
+	}
+
+	private void unsubscribeFrom(String topic) { // unsubscribe from a topic
+		subscribedTopics.remove(topic); // Delete locally
+		try {
+			server.unsubscribe(this, topic); // Tell the server to unsubscribe
+		}
+		catch( RemoteException e ) {
+			e.printStackTrace();
+		}
+	}
+
+
 	public String getName() {
 		return this.name;
 	}
 
-	public void receiveEnter( String name ) {
-		System.out.println("\nLog in "+name+"\n"+this.name+" -- Cadena a enviar: ");
-	}
-
-	public void receiveExit( String name ) {
-		System.out.println("\nLog out " + name + "\n");
-		if ( name.equals(this.name) )
-			System.exit(0);
-		else
-			System.out.println(this.name + " -- Cadena a enviar: " );
-	}
-
-	public void receiveMessage( Message message ) {
-			System.out.println
-('\n'+message.name+":\n"+message.text+"\n"+name+" -- Cadena a enviar: ");
+	public void notify( Message message ) {
+			System.out.println(message.user + "("+ message.topic +"): " + message.text);
 	}
 
 	public static String pideCadena(String letrero) {
@@ -87,19 +89,40 @@ public class Client extends UnicastRemoteObject implements IClient {
 	}
 
 	public static void main( String[] args ) {
-		String strCad;
+		String strCad = "";
 		try {
 			System.out.println("Connecting to " + args[1]);
 			Client clte = new Client( args[0],args[1] );
 
-			strCad = pideCadena(args[0] + " -- Cadena a enviar: ");
+			// Basic UI for the client, it lets the client subscribe, unsubscribe and send messages to a topic
+			while( !strCad.equals("4") ) {
+				strCad = pideCadena("\nElige las siguientes opciones\n[1] Suscribirse a topic\n[2] Desuscribirse a topic\n[3] Enviar mensaje a Topic\n[4] Salir\n ");
+				if (strCad.equals("1")) {
+					strCad = pideCadena("\nCual es el nombre del topic: ");
+					clte.subscribeTo(strCad);
+					strCad = "";
+				} else if ( strCad.equals("2") ) {
+					System.out.println("\nTopics subscrito:\n");
+					for (String subscribed : clte.subscribedTopics) {
+						System.out.println(subscribed);
+					}
+					strCad = pideCadena("\nCual es el nombre del topic: ");
+					clte.unsubscribeFrom(strCad);
+					strCad = "";
 
-			while( !strCad.equals("quit") ) {
-				clte.sendTextToChat(strCad);
-				strCad = pideCadena(args[0]+" -- Cadena a enviar: ");
+				} else if ( strCad.equals("3") ) {
+					String topic = pideCadena("\nCual es el nombre del topic al que enviara mensaje: ");
+					String message = pideCadena("\nCual es el mensaje: ");
+					clte.publishIn(message, topic);
+				} else {
+					System.out.println("\nVuelva a intentarlo... :(\n");
+				}
 			}
 			System.out.println("Local console "+clte.name+", going down");
-			clte.disconnect();
+			for (String subscribed : new ArrayList<String>(clte.subscribedTopics)) {
+				clte.unsubscribeFrom(subscribed);
+			}
+			System.exit(0);
 		}
 		catch( RemoteException e ) {
 			e.printStackTrace();

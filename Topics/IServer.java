@@ -2,7 +2,8 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface IServer extends java.rmi.Remote {
-  void login(String name, IClient newClient) throws RemoteException;
-  void logout(String name)throws RemoteException;
-  void send(Message message) throws RemoteException;
+  void login(IClient user) throws RemoteException;
+  void subscribe(IClient user, String topic) throws RemoteException;
+  void unsubscribe(IClient user, String topic) throws RemoteException;
+  void publish(Message message) throws RemoteException;
 }
