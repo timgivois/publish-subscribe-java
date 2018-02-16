@@ -4,8 +4,8 @@ import java.util.*;
 
 public class Server extends UnicastRemoteObject implements IServer {
 	// subscriptions of the topic-> clients should be in a hashtable
-	Hashtable<String, ArrayList<IClient>> subscriptions = new Hashtable<String, ArrayList<IClient>>();
-	Hashtable<String, ArrayList<Message>> messages = new Hashtable<String, ArrayList<Message>>();
+	HashMap<String, ArrayList<IClient>> subscriptions = new HashMap<String, ArrayList<IClient>>();
+	HashMap<String, ArrayList<Message>> messages = new HashMap<String, ArrayList<Message>>();
 
 	public Server() throws RemoteException  {}
 	// Just to know who logged in
